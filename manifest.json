@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YT音轨翻译",
   "short_name": "YT音轨翻译",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "直接监听标签页音轨，用本地 Speaches / faster-whisper 识别，再翻译成简体中文。",
   "minimum_chrome_version": "116",
   "icons": {
@@ -12,7 +12,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "DS音轨翻译",
+    "default_title": "YT音轨翻译",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

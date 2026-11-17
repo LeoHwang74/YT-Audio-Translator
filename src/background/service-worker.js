@@ -683,7 +683,7 @@ function flashBadge(text, color) {
 async function refreshBadge() {
   try {
     chrome.action.setBadgeText({ text: '' });
-    chrome.action.setTitle({ title: 'DS音轨翻译' });
+    chrome.action.setTitle({ title: 'YT音轨翻译' });
   } catch (_) {
     /* ignore */
   }
