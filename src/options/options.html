@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YT音轨翻译 · 设置</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true"></div>
+    <main class="shell">
+      <header class="hero">
+        <img class="logo" src="../../icons/icon48.png" alt="YT音轨翻译" width="48" height="48" />
+        <div class="hero-text">
+          <h1>YT音轨翻译</h1>
+          <p>本地语音识别 · 实时中文字幕</p>
+        </div>
+        <span class="pill" id="keyState">本地服务</span>
+      </header>
+
+      <form id="form" autocomplete="off">
+        <section class="card">
+          <div class="card-head">
+            <h2>语音识别</h2>
+            <span class="tag">OpenAI 兼容</span>
+          </div>
+          <p class="desc">
+            识别请求发往本地 Speaches / faster-whisper 服务，音频不出本机。
+            启动方式：在项目目录运行 <code>start-asr.ps1</code>。
+          </p>
+
+          <label class="field">
+            <span>协议</span>
+            <select id="asrProvider">
+              <option value="openai">OpenAI 兼容</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>ASR Base URL</span>
+            <input id="asrBaseUrl" type="text" placeholder="http://127.0.0.1:8000/v1" spellcheck="false" />
+          </label>
+
+          <label class="field">
+            <span>ASR 模型</span>
+            <input id="asrModel" type="text" list="asrModelOptions" placeholder="Systran/faster-whisper-base" spellcheck="false" />
+            <datalist id="asrModelOptions"></datalist>
+          </label>
+
+          <p class="hint">
+            语音识别：<code id="asrPreview">http://127.0.0.1:8000/v1/audio/transcriptions</code>
+          </p>
+          <div class="test-result" id="asrResult" hidden></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>字幕外观</h2>
+          </div>
+          <div class="grid2">
+            <label class="field range-field">
+              <span>字号 <output id="fontSizeOut">39px</output></span>
+              <input id="fontSize" type="range" min="14" max="64" step="1" />
+            </label>
+            <label class="field range-field">
+              <span>距底部 <output id="offsetOut">12%</output></span>
+              <input id="offsetPercent" type="range" min="0" max="55" step="1" />
+            </label>
+          </div>
+          <label class="field range-field">
+            <span>字幕背景不透明度 <output id="opacityOut">100%</output></span>
+            <input id="opacity" type="range" min="20" max="100" step="1" />
+          </label>
+          <div class="checks">
+            <label><input type="checkbox" id="showOriginal" /> 同时显示识别出的原文</label>
+            <label><input type="checkbox" id="showStatus" /> 显示状态提示</label>
+          </div>
+        </section>
+
+        <div class="footer">
+          <button type="button" class="btn ghost" id="checkBtn">测试服务</button>
+          <button type="submit" class="btn primary wide" id="saveBtn">保存设置</button>
+        </div>
+      </form>
+    </main>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script src="../shared/settings.js"></script>
+    <script src="../shared/languages.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

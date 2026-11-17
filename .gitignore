@@ -1,0 +1,13 @@
+# release artifacts belong in GitHub Releases, not in git
+*.zip
+*.crx
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# local secrets
+.env
+.env.*

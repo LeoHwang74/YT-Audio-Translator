@@ -1,0 +1,153 @@
+# YT音轨翻译
+
+**直接监听 YouTube 标签页音轨，实时生成简体中文双语字幕的 Chrome 扩展（Manifest V3）。**
+
+不读取、不依赖 YouTube 的 CC 字幕 —— 它捕获音频，交给本地语音识别，再用本地大模型翻译，字幕叠加在播放器内部（全屏可用）。
+
+> ⚠️ **这不是一个装完即用的云端插件。** 语音识别和翻译都跑在**你自己的电脑**上，需要先启动两个本地服务（见下方「准备本地服务」）。好处是：不需要任何 API Key，音频和文字都不出本机，长期使用 0 成本。
+
+![设置页](screenshots/options.png)
+
+## 功能
+
+- **以音轨为准**：捕获标签页音频做识别，有没有 CC 字幕都能用
+- **全本地**：语音识别用 faster-whisper，翻译用 Ollama 上的 `qwen2.5:3b`，不联网、无 Key
+- **实时双语悬浮层**：译文叠加在播放器内，支持全屏；可切换是否显示原文
+- **字幕外观可调**：字号、距底部距离、背景不透明度
+- **划词翻译**：任意网页选中文字，右键即可翻译
+- **快捷键**：`Alt + Shift + A` 开始 / 停止
+
+## 工作原理
+
+```
+YouTube 标签页音轨
+   │ chrome.tabCapture
+   ▼
+Offscreen 文档：AudioContext + 能量 VAD
+   │ 0.6–1.6 秒 WAV 分片（检测到静音提前切分）
+   ▼
+Service Worker ──► 本地 ASR  POST /v1/audio/transcriptions   (faster-whisper)
+   │ 英文文本，跨分片去重
+   ▼
+Service Worker ──► 本地 LLM  POST /v1/chat/completions       (Ollama qwen2.5:3b)
+   │ 流式返回简体中文
+   ▼
+Content Script ──► 播放器内 Shadow DOM 悬浮层
+```
+
+## 实测延迟
+
+在 i5-14600KF + RTX 5060 上（7.67 秒音频）：
+
+| 环节 | 耗时 |
+| --- | --- |
+| 语音识别 | 0.7–1.0 秒 / 1.5 秒分片 |
+| 翻译 | 首字 0.03 秒，整句 0.09–0.15 秒 |
+| **端到端** | **约 1.0–1.5 秒** |
+
+## 准备本地服务
+
+### ① 语音识别：faster-whisper（端口 8000）
+
+需要暴露一个 OpenAI 兼容的 `/v1/audio/transcriptions` 接口。仓库里不含这部分实现，最简单的做法是用 Python 起一个服务：
+
+```bash
+pip install faster-whisper fastapi uvicorn python-multipart
+```
+
+然后实现一个最小的 FastAPI 服务（接收 `file` 和 `model` 两个表单字段，返回 `{"text": "..."}`），监听 `127.0.0.1:8000`。
+
+也可以用现成的 [Speaches](https://github.com/speaches-ai/speaches)（Docker）：
+```bash
+docker run -d --name speaches -p 8000:8000 \
+  -v speaches-models:/home/ubuntu/.cache/huggingface/hub \
+  ghcr.io/speaches-ai/speaches:latest-cpu
+```
+
+### ② 翻译：Ollama（端口 11434）
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+**必须允许扩展来源**，否则 Ollama 会以 403 拒绝请求：
+
+```bash
+# Windows（用户环境变量，设完重启 Ollama）
+setx OLLAMA_ORIGINS "*"
+
+# macOS / Linux
+export OLLAMA_ORIGINS="*"
+```
+
+## 安装
+
+1. 下载 [Releases](../../releases/latest) 里的 zip 并解压，或直接克隆本仓库
+2. 打开 `chrome://extensions`，右上角开启**开发者模式**
+3. 点「加载已解压的扩展程序」，选择本仓库根目录（里面应直接有 `manifest.json`）
+4. 刷新 YouTube 页面
+
+需要 **Chrome 116+**（`offscreen` / `tabCapture`）。
+
+## 设置
+
+| 项 | 默认值 | 是否可改 |
+| --- | --- | --- |
+| 协议 | OpenAI 兼容 | 否（固定） |
+| ASR Base URL | `http://127.0.0.1:8000/v1` | 是 |
+| ASR 模型 | `Systran/faster-whisper-base` | 是 |
+| 翻译 Base URL | `http://127.0.0.1:11434/v1` | 否（内置） |
+| 翻译模型 | `qwen2.5:3b` | 否（内置） |
+| Temperature | 0.3 | 否（内置） |
+
+## 使用
+
+1. 打开 YouTube 视频或直播
+2. 点击工具栏里的 **YT音轨翻译** 图标
+3. 点「开始音频翻译」，浏览器会要求授权捕获当前标签页音轨（Chrome 的安全限制，必须用户点击）
+4. 播放器底部出现中文字幕；`Alt + Shift + A` 可开始 / 停止
+
+## 排错
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| 完全没字幕 | 识别服务没起来 | `curl http://127.0.0.1:8000/health` |
+| 只有英文没有中文 | Ollama 没跑或模型没拉 | `ollama list` |
+| 翻译请求 403 | Ollama 拒绝了扩展来源 | 设置 `OLLAMA_ORIGINS=*` 后重启 |
+| 翻译请求 404 `model not found` | 模型名不对 | `ollama pull qwen2.5:3b` |
+| 识别服务报 `NOT_FOUND: source.spm` | 模型放在含中文的路径下 | sentencepiece 在 Windows 上不支持非 ASCII 路径，换纯英文目录 |
+
+## 权限说明
+
+| 权限 | 用途 |
+| --- | --- |
+| `tabCapture` | 捕获当前标签页音轨 |
+| `offscreen` | 在隐藏文档中运行 AudioContext |
+| `storage` | 保存设置 |
+| `activeTab` / `scripting` | 在 YouTube 页面注入悬浮层 |
+| `contextMenus` | 划词翻译、开始/停止 |
+| `clipboardWrite` | 复制译文 |
+
+`host_permissions` 只包含 `api.deepseek.com`、`127.0.0.1:8000`、`127.0.0.1:11434`。不申请麦克风、摄像头、历史记录。
+
+## 目录
+
+```
+manifest.json
+icons/                 紫色 YT 图标
+src/
+  background/          音轨会话、ASR 队列、翻译流
+  content/             播放器悬浮层 / 划词气泡
+  offscreen/           tabCapture + VAD + WAV 分片
+  options/             设置页
+  popup/               开始/停止
+  shared/              设置、ASR 客户端、提示词、音频编码
+```
+
+## 免责声明
+
+本项目与 Google、YouTube、DeepSeek、Ollama 官方无关联。仅用于个人学习与研究，请遵守目标网站的服务条款与所在地法律。
+
+## License
+
+[MIT](LICENSE)

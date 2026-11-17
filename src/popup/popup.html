@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YT音轨翻译</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <img class="logo" src="../../icons/icon32.png" alt="" width="32" height="32" />
+      <div class="titles">
+        <h1>YT音轨翻译</h1>
+        <p id="version">v1.0.0</p>
+      </div>
+      <span class="live-pill" id="livePill">音频</span>
+    </header>
+
+    <section class="audio-card">
+      <div class="status-row">
+        <span class="dot" id="statusDot"></span>
+        <div class="status-text">
+          <b id="audioTitle">正在检测页面…</b>
+          <span id="audioHint">自动识别音轨语言 → 简体中文</span>
+        </div>
+      </div>
+      <button class="audio-btn" id="audioBtn" type="button" disabled>开始音频翻译</button>
+      <div class="meta" id="audioMeta">点击开始后，浏览器会捕获当前标签页音轨</div>
+    </section>
+
+    <button class="secondary" id="selectionBtn" type="button">
+      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+        <path fill="currentColor" d="M4 4h9v2H6v12h12v-7h2v9H4V4Zm14.7 1.3 2 2-6.4 6.4-2.6.6.6-2.6 6.4-6.4Z" />
+      </svg>
+      翻译当前页面选区
+    </button>
+
+    <div class="row">
+      <button class="ghost" id="openOptions" type="button">设置</button>
+      <button class="ghost" id="refreshBtn" type="button">刷新状态</button>
+    </div>
+
+    <footer>
+      仅采集当前标签页音轨 · 分片发送至本地识别服务<br />
+      翻译由本地 qwen2.5:3b 完成 · 全程不联网
+    </footer>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="../shared/settings.js"></script>
+    <script src="../shared/languages.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
