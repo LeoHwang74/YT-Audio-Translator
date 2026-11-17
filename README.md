@@ -45,7 +45,65 @@ Content Script ──► 播放器内 Shadow DOM 悬浮层
 | 翻译 | 首字 0.03 秒，整句 0.09–0.15 秒 |
 | **端到端** | **约 1.0–1.5 秒** |
 
-## 准备本地服务
+## 一键安装（推荐）
+
+先拿到仓库（含安装脚本）：
+
+```powershell
+git clone https://github.com/LeoHwang74/yt-audio-translator.git
+cd yt-audio-translator
+```
+
+然后运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+脚本会自动完成这些事：
+
+| 步骤 | 内容 |
+| --- | --- |
+| 1 | 检测 Python 3.9+（没有会提示去装并退出） |
+| 2 | 在 `%LOCALAPPDATA%\yt-audio-translator` 建独立 venv |
+| 3 | 安装 `faster-whisper` / `fastapi` / `uvicorn` |
+| 4 | 下载 `base` 语音模型（约 150 MB，只下一次） |
+| 5 | 生成 `start-asr.ps1` 和 `start-all.ps1` |
+| 6 | 设置 `OLLAMA_ORIGINS=*`（扩展能访问 Ollama 的关键） |
+| 7 | `ollama pull qwen2.5:3b` |
+| 8 | 启动识别服务并验证 `/health` |
+
+常用参数：
+
+```powershell
+# 更准的模型 + 更多线程
+.\install.ps1 -AsrModel small -Threads 20
+
+# 换 Ollama 模型
+.\install.ps1 -OllamaModel qwen2.5:7b
+
+# 只装语音识别，跳过 Ollama
+.\install.ps1 -SkipOllama
+
+# 装完不自动启动
+.\install.ps1 -NoStart
+
+# 换安装位置
+.\install.ps1 -InstallDir D:\tools\yt-translator
+```
+
+装完之后，日常只需一条命令启动全部服务：
+
+```powershell
+& "$env:LOCALAPPDATA\yt-audio-translator\start-all.ps1"
+```
+
+> 脚本是全英文输出（Windows PowerShell 读取无 BOM 的中文 `.ps1` 会乱码）。
+> 它只写 `-InstallDir` 目录和你用户级的 `OLLAMA_ORIGINS` 变量，不动别的东西。
+
+## 手动配置（可选）
+
+不想用脚本、想自己控制每一步的话，按下面来。
 
 ### ① 语音识别：faster-whisper（端口 8000）
 
@@ -135,6 +193,9 @@ export OLLAMA_ORIGINS="*"
 ```
 manifest.json
 icons/                 紫色 YT 图标
+install.ps1            一键安装本地服务（Python venv + 模型 + Ollama）
+tools/
+  asr_server.py        OpenAI 兼容的 faster-whisper 服务
 src/
   background/          音轨会话、ASR 队列、翻译流
   content/             播放器悬浮层 / 划词气泡
