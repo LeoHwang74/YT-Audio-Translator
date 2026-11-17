@@ -1,0 +1,131 @@
+YT音轨翻译 — 使用说明（全本地版）
+========================================
+
+两条链路全部在本机完成，不需要任何云端 API Key，不联网：
+
+    YouTube 音轨
+        ↓  tabCapture
+    本地 faster-whisper   (127.0.0.1:8000)   →  英文字幕
+        ↓
+    本地 Ollama qwen2.5:3b (127.0.0.1:11434) →  中文字幕
+        ↓
+    播放器悬浮层
+
+
+一、启动服务
+------------
+1) 语音识别（必须手动启动）
+
+    & "G:\我的文档\deepseek-harness\default-workspace\.local-mt\start-all.ps1"
+
+   这个脚本会检查 8000 和 11434：
+     - 8000 没起 → 启动识别服务
+     - 11434 没起 → 启动备用翻译服务
+   两者都就绪后打印「both ready」。
+
+   只想单独启动识别：
+    & "...\.local-asr\start-asr.ps1"
+
+   停止识别：
+    & "...\.local-asr\stop-asr.ps1"
+
+2) 翻译（Ollama 已安装，随 Windows 自启）
+
+   托盘里会有 Ollama 图标，它自动监听 127.0.0.1:11434。
+   检查是否在跑：
+
+    & "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" list
+
+   应能看到 qwen2.5:3b。
+
+   如果没在跑，双击开始菜单里的 Ollama，或执行：
+    & "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" serve
+
+   > 注意：ollama 没有加进本会话的 PATH，新开的终端里可以直接用 `ollama`；
+   > 老窗口请用上面的完整路径。
+
+
+二、加载扩展
+------------
+1. 打开 chrome://extensions
+2. 右上角打开「开发者模式」
+3. 点「加载已解压的扩展程序」
+4. 选择桌面上的 YT音轨翻译 文件夹
+   （里面应直接能看到 manifest.json）
+
+
+三、设置（默认已填好，不用改）
+------------------------------
+语音识别（界面可见）：
+    协议            OpenAI 兼容
+    ASR Base URL    http://127.0.0.1:8000/v1
+    ASR 模型        Systran/faster-whisper-base
+
+翻译（写死在扩展里，界面不显示）：
+    Base URL        http://127.0.0.1:11434/v1
+    模型            qwen2.5:3b
+    Temperature     0.3
+    Key             local（占位符，Ollama 不校验）
+
+「测试服务」按钮可以检查本地识别服务是否连通。
+
+
+四、使用
+--------
+1. 打开 YouTube 视频或直播
+2. 点工具栏上的 YT音轨翻译 图标
+3. 点「开始音频翻译」，允许捕获标签页音轨
+4. 播放器底部出现中文字幕，Alt+Shift+A 可开始/停止
+
+实测延迟（i5-14600KF + RTX 5060）：
+    语音识别   0.7–1.0 秒 / 1.5 秒分片
+    翻译       首字 0.03 秒，整句 0.09–0.15 秒
+    合计       约 1.0–1.5 秒
+
+
+五、出问题时
+------------
+1. 只出英文不出中文
+       & "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe" ps
+   应看到 qwen2.5:3b 且 PROCESSOR 为 100% GPU。
+   还要确认 `start-all.ps1` 没有把备用翻译服务顶到 11434 上。
+
+2. 完全没字幕
+       curl http://127.0.0.1:8000/health
+
+3. 翻译里混进英文单词
+   说明 temperature 被调高了。默认 0.3，超过 1.0 小模型容易漏出原文。
+
+
+六、为什么 temperature 是 0.3
+------------------------------
+qwen2.5:3b 在 1.3 的温度下会把 "tonight"、"storm" 这类词漏进中文。
+实测：
+
+    1.3 → "快速的棕色狐狸跳过懒狗。 tonight我们报道东移的暴 storm。"   ✗
+    0.3 → "快速的棕色狐狸跳过懒狗。今晚我们报道东边的风暴。"           ✓
+
+降低温度后 8 条新闻字幕全部输出干净中文，延迟也更稳。
+
+
+七、附：备用翻译服务（可选）
+----------------------------
+.local-mt 目录里还有一个基于 opus-mt-en-zh 的翻译服务，
+它同样监听 11434，接口与 Ollama 一致，扩展无需任何改动。
+
+它在 Ollama 没装好时救过场，现在作为备选：
+    启动：& "...\.local-mt\start-mt.ps1"
+    （先停掉 Ollama，否则端口冲突）
+
+模型在 G:\lm-local\model，必须放纯英文路径——
+sentencepiece 在 Windows 上打不开含中文的路径（会报 NOT_FOUND: source.spm）。
+
+
+八、文件位置
+------------
+扩展源码：G:\我的文档\deepseek-harness\default-workspace\deepseek-live-translator\extension
+本地识别：G:\我的文档\deepseek-harness\default-workspace\.local-asr
+备用翻译：G:\我的文档\deepseek-harness\default-workspace\.local-mt
+备选模型：G:\lm-local\model
+Ollama  ：C:\Users\Administrator\AppData\Local\Programs\Ollama
+Ollama 模型：C:\Users\Administrator\.ollama\models

@@ -82,7 +82,7 @@ export OLLAMA_ORIGINS="*"
 
 ## 安装
 
-1. 下载 [Releases](../../releases/latest) 里的 zip 并解压，或直接克隆本仓库
+1. 下载 [Releases](../../releases/latest) 里的 `yt-audio-translator-v1.0.0.zip` 并解压，或直接克隆本仓库
 2. 打开 `chrome://extensions`，右上角开启**开发者模式**
 3. 点「加载已解压的扩展程序」，选择本仓库根目录（里面应直接有 `manifest.json`）
 4. 刷新 YouTube 页面
