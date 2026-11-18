@@ -175,6 +175,21 @@ export OLLAMA_ORIGINS="*"
 | 翻译请求 404 `model not found` | 模型名不对 | `ollama pull qwen2.5:3b` |
 | 识别服务报 `NOT_FOUND: source.spm` | 模型放在含中文的路径下 | sentencepiece 在 Windows 上不支持非 ASCII 路径，换纯英文目录 |
 
+建议：让识别服务开机自启
+
+如果服务仍然无法开机自启，建议：
+
+放进启动文件夹（最简单，不需要管理员权限）
+
+powershell
+$startup = [Environment]::GetFolderPath('Startup')
+$vbs = Join-Path $startup "yt-asr.vbs"
+@'
+Set sh = CreateObject("WScript.Shell")
+sh.Run "powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""G:\我的文档\deepseek-harness\default-workspace\.local-asr\start-asr.ps1""", 0, False
+'@ | Set-Content $vbs -Encoding ASCII
+登录后会在后台静默启动，看不到窗口。要取消就删掉那个 yt-asr.vbs。
+
 ## 权限说明
 
 | 权限 | 用途 |
