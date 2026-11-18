@@ -184,10 +184,15 @@ export OLLAMA_ORIGINS="*"
 powershell
 
 $startup = [Environment]::GetFolderPath('Startup')
+
 $vbs = Join-Path $startup "yt-asr.vbs"
+
 @'
+
 Set sh = CreateObject("WScript.Shell")
+
 sh.Run "powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""G:\我的文档\deepseek-harness\default-workspace\.local-asr\start-asr.ps1""", 0, False
+
 '@ | Set-Content $vbs -Encoding ASCII
 
 登录后会在后台静默启动，看不到窗口。要取消就删掉那个 yt-asr.vbs。
