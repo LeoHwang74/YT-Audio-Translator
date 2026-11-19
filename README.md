@@ -1,5 +1,7 @@
 # YT音轨翻译
 
+简体中文 | [English](README.en.md)
+
 **直接监听 YouTube 标签页音轨，实时生成简体中文字幕的 Chrome 扩展（Manifest V3）。**
 
 不读取、不依赖 YouTube 的 CC 字幕 —— 它捕获音频，交给本地语音识别，再用本地大模型翻译，字幕叠加在播放器内部（全屏可用）。
